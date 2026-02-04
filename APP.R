@@ -46,7 +46,7 @@ ui <- fluidPage(
   # Titre avec style nutrition
   div(style = "text-align: center; background: linear-gradient(90deg, #4CAF50, #8BC34A); 
               color: white; padding: 20px; margin-bottom: 20px; border-radius: 10px;",
-      h1("🥗 Analyse Nutritionnelle PNNS 🍎", style = "margin: 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);")),
+      h1("Analyse Nutritionnelle des données Open Food Facts", style = "margin: 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);")),
   
   tabsetPanel(
     tabPanel("🔍 Vue d'ensemble",
@@ -80,11 +80,11 @@ ui <- fluidPage(
     ),
     tabPanel("🧮 Analyse multivariée",
              div(style = "background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);",
-                 h4("🎯 ACP - Cercle des corrélations et clustering K-means", style = "color: #2E7D32;"),
+                 h4("ACP - Cercle des corrélations et clustering K-means", style = "color: #2E7D32;"),
                  fluidRow(
                    column(6,
                           div(style = "background: #E3F2FD; padding: 15px; border-radius: 8px;",
-                              numericInput("k_cluster", "Nombre de clusters K-means :", value = 3, min = 2, max = 10)
+                              numericInput("k_cluster", "Choisir le nombre de clusters K-means :", value = 3, min = 2, max = 10)
                           )),
                    column(6,
                           div(style = "padding: 15px;",
@@ -92,40 +92,53 @@ ui <- fluidPage(
                                            class = "btn-success", style = "width: 100%; font-weight: bold;")
                           ))
                  ),
-                 plotOutput("correlation_circle"),
-                 plotOutput("kmeans_acp_plot"),
-                 div(style = "background: #F1F8E9; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;",
+                 # Mise en page côte à côte pour les graphiques
+                 fluidRow(
+                   column(6,
+                          plotOutput("correlation_circle", height = "550px")
+                   ),
+                   column(6,
+                          plotOutput("kmeans_acp_plot", height = "550px")
+                   )
+                 ),
+                 div(style = "background: #F1F8E9; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50; margin-top: 20px;",
                      textOutput("acp_cluster_comment"))
              )
     ),
     tabPanel("🔬 Interprétation des clusters",
              div(style = "background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);",
-                 h4("🎯 Compréhension des groupes identifiés", style = "color: #2E7D32;"),
+                 h4("💡 Compréhension des groupes identifiés", style = "color: #2E7D32;"),
                  div(style = "background: #E8F5E8; padding: 15px; border-radius: 8px; margin-bottom: 20px;",
-                     p("Cette section détaille les caractéristiques de chaque cluster identifié par l'analyse K-means.")),
+                     p("Ce Dashbord permet de comprendre comment sont formés les Clusters il détail les caractéristiques de chaque cluster identifié par l'analyse K-means lancé sur la page Analyse Multivariée")),
                  
-                 h4("📈 Caractérisation des clusters", style = "color: #FF9800; border-bottom: 2px solid #FFB74D; padding-bottom: 5px;"),
-                 tableOutput("cluster_characteristics"),
+                 # Mise en page côte à côte pour les tableaux
+                 fluidRow(
+                   column(6,
+                          h4("Caractérisation des clusters", style = "color: #FF9800; border-bottom: 2px solid #FFB74D; padding-bottom: 5px;"),
+                          tableOutput("cluster_characteristics")
+                   ),
+                   column(6,
+                          h4("Profils nutritionnels par cluster", style = "color: #FF9800; border-bottom: 2px solid #FFB74D; padding-bottom: 5px;"),
+                          div(style = "overflow-x: auto;",
+                              tableOutput("cluster_profiles"))
+                   )
+                 ),
                  br(),
-                 h4("🥘 Distribution des groupes PNNS par cluster", style = "color: #FF9800; border-bottom: 2px solid #FFB74D; padding-bottom: 5px;"),
-                 plotOutput("cluster_pnns_plot"),
-                 br(),
-                 h4("🍎 Profils nutritionnels par cluster", style = "color: #FF9800; border-bottom: 2px solid #FFB74D; padding-bottom: 5px;"),
-                 div(style = "overflow-x: auto;",
-                     tableOutput("cluster_profiles"))
+                 h4("Distribution des groupes PNNS par cluster", style = "color: #FF9800; border-bottom: 2px solid #FFB74D; padding-bottom: 5px;"),
+                 plotOutput("cluster_pnns_plot")
              )
     ),
     tabPanel("📋 Table complète",
              fluidRow(
                column(6,
                       div(style = "background: #E8F5E8; padding: 15px; border-radius: 10px;",
-                          selectInput("filter_group", "🥗 Filtrer par groupe PNNS :",
+                          selectInput("filter_group", " Filtrer par groupe PNNS :",
                                       choices = c("Tout voir", unique(data$pnns_groups_1)),
                                       selected = "Tout voir")
                       )),
                column(6,
                       div(style = "background: #FFF3E0; padding: 15px; border-radius: 10px;",
-                          selectInput("filter_nutri", "🏷️ Filtrer par Nutriscore :",
+                          selectInput("filter_nutri", " Filtrer par Nutriscore :",
                                       choices = c("Tout voir", "A", "B", "C", "D", "E"),
                                       selected = "Tout voir")
                       ))
@@ -171,7 +184,7 @@ server <- function(input, output) {
     ggplot(filtered_data(), aes_string(x = "pnns_groups_1", y = input$selected_var, fill = "pnns_groups_1")) +
       stat_summary(fun = mean, geom = "bar", color = "white", size = 0.5) +
       scale_fill_manual(values = colors_to_use) +
-      labs(title = paste("🍎 Valeur moyenne de", input$selected_var, "par groupe PNNS"),
+      labs(title = paste("Valeur moyenne de", input$selected_var, "par groupe PNNS"),
            x = "Groupes PNNS", y = input$selected_var) +
       theme_minimal() +
       theme(
@@ -235,7 +248,7 @@ server <- function(input, output) {
                    col.var = "contrib", 
                    gradient.cols = c("#4CAF50", "#FF9800", "#FF5722"), 
                    repel = TRUE,
-                   title = "🎯 Cercle des corrélations") +
+                   title = "Cercle des corrélations") +
         theme_minimal() +
         theme(
           plot.title = element_text(color = "#2E7D32", size = 14, face = "bold"),
@@ -265,7 +278,7 @@ server <- function(input, output) {
                         show.clust.cent = TRUE,
                         pointsize = 1.5,
                         palette = nutrition_palette[1:input$k_cluster],
-                        main = paste("🧮 Clustering K-means sur les axes principaux (K =", input$k_cluster, ")"),
+                        main = paste("Clustering K-means sur les axes principaux (K =", input$k_cluster, ")"),
                         xlab = paste("Dim1 (", round(acp_res$eig[1,2], 1), "%)"),
                         ylab = paste("Dim2 (", round(acp_res$eig[2,2], 1), "%)")) +
         theme_minimal() +
@@ -341,7 +354,7 @@ server <- function(input, output) {
       ggplot(data_complete, aes(x = cluster, fill = pnns_groups_1)) +
         geom_bar(position = "fill", color = "white", size = 0.3) +
         scale_fill_manual(values = nutrition_palette) +
-        labs(title = "🥘 Distribution des groupes PNNS par cluster",
+        labs(title = "Distribution des groupes PNNS par cluster",
              x = "Cluster", y = "Proportion", fill = "Groupes PNNS") +
         scale_y_continuous(labels = scales::percent) +
         theme_minimal() +
